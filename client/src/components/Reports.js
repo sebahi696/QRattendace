@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import moment from 'moment';
 import './Reports.css';
@@ -16,7 +16,7 @@ const Reports = () => {
   useEffect(() => {
     fetchEmployees();
     fetchReports();
-  }, []);
+  }, [fetchReports]);
 
   const fetchEmployees = async () => {
     try {
@@ -27,7 +27,7 @@ const Reports = () => {
     }
   };
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -42,7 +42,7 @@ const Reports = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.startDate, filters.endDate, filters.employeeId]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }));

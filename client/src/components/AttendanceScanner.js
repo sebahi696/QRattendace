@@ -5,7 +5,6 @@ import './AttendanceScanner.css';
 const AttendanceScanner = () => {
   const [employeeId, setEmployeeId] = useState('');
   const [employeeName, setName] = useState('');
-  const [qrData, setQrData] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
