@@ -13,11 +13,6 @@ const Reports = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchEmployees();
-    fetchReports();
-  }, [fetchReports]);
-
   const fetchEmployees = async () => {
     try {
       const response = await axios.get('/api/employees');
@@ -43,6 +38,11 @@ const Reports = () => {
       setLoading(false);
     }
   }, [filters.startDate, filters.endDate, filters.employeeId]);
+
+  useEffect(() => {
+    fetchEmployees();
+    fetchReports();
+  }, [fetchReports]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }));
