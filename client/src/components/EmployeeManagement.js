@@ -12,7 +12,8 @@ const EmployeeManagement = () => {
     email: '',
     phone: '',
     position: '',
-    department: ''
+    department: '',
+    working_hours: '9:00-17:00'
   });
   const [message, setMessage] = useState('');
 
@@ -50,7 +51,8 @@ const EmployeeManagement = () => {
         email: '',
         phone: '',
         position: '',
-        department: ''
+        department: '',
+        working_hours: '9:00-17:00'
       });
       setShowForm(false);
       fetchEmployees();
@@ -138,6 +140,17 @@ const EmployeeManagement = () => {
                     onChange={handleInputChange}
                   />
                 </div>
+
+                <div className="form-group">
+                  <label>Working Hours</label>
+                  <input
+                    type="text"
+                    name="working_hours"
+                    value={formData.working_hours}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 9:00-17:00"
+                  />
+                </div>
               </div>
 
               <div className="form-actions">
@@ -178,13 +191,14 @@ const EmployeeManagement = () => {
                     <th>Phone</th>
                     <th>Position</th>
                     <th>Department</th>
+                    <th>Working Hours</th>
                     <th>Created</th>
                   </tr>
                 </thead>
                 <tbody>
                   {employees.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="no-data">No employees found</td>
+                      <td colSpan="8" className="no-data">No employees found</td>
                     </tr>
                   ) : (
                     employees.map(employee => (
@@ -195,6 +209,7 @@ const EmployeeManagement = () => {
                         <td>{employee.phone || 'N/A'}</td>
                         <td>{employee.position || 'N/A'}</td>
                         <td>{employee.department || 'N/A'}</td>
+                        <td>{employee.working_hours || '9:00-17:00'}</td>
                         <td>{new Date(employee.created_at).toLocaleDateString()}</td>
                       </tr>
                     ))

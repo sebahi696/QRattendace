@@ -73,6 +73,7 @@ db.serialize(() => {
     phone TEXT,
     position TEXT,
     department TEXT,
+    working_hours TEXT DEFAULT '9:00-17:00',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
@@ -216,7 +217,7 @@ app.get('/api/qr-codes/:date', (req, res) => {
 
 // Process QR scan (check-in/check-out)
 app.post('/api/attendance/scan', (req, res) => {
-  const { qrData, employeeId, employeeName } = req.body;
+  const { qrData, employeeId } = req.body;
   
   try {
     const qrInfo = JSON.parse(qrData);
@@ -228,24 +229,17 @@ app.post('/api/attendance/scan', (req, res) => {
       return res.status(400).json({ error: 'QR code is not valid for today' });
     }
     
-    // Find or create employee
+    // Find employee
     db.get('SELECT * FROM employees WHERE employee_id = ?', [employeeId], (err, employee) => {
       if (err) {
         return res.status(500).json({ error: 'Database error' });
       }
       
       if (!employee) {
-        // Create new employee
-        db.run('INSERT INTO employees (employee_id, name) VALUES (?, ?)', 
-          [employeeId, employeeName], function(err) {
-            if (err) {
-              return res.status(500).json({ error: 'Failed to create employee' });
-            }
-            processAttendance(qrInfo, employeeId, now);
-          });
-      } else {
-        processAttendance(qrInfo, employeeId, now);
+        return res.status(400).json({ error: 'Employee not found. Please contact admin to register your ID.' });
       }
+      
+      processAttendance(qrInfo, employeeId, now);
     });
     
     function processAttendance(qrInfo, empId, timestamp) {
@@ -357,10 +351,10 @@ app.get('/api/employees', authenticateToken, (req, res) => {
 
 // Add new employee
 app.post('/api/employees', authenticateToken, (req, res) => {
-  const { employee_id, name, email, phone, position, department } = req.body;
+  const { employee_id, name, email, phone, position, department, working_hours } = req.body;
   
-  db.run('INSERT INTO employees (employee_id, name, email, phone, position, department) VALUES (?, ?, ?, ?, ?, ?)', 
-    [employee_id, name, email, phone, position, department], function(err) {
+  db.run('INSERT INTO employees (employee_id, name, email, phone, position, department, working_hours) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+    [employee_id, name, email, phone, position, department, working_hours || '9:00-17:00'], function(err) {
       if (err) {
         return res.status(500).json({ error: 'Failed to add employee' });
       }

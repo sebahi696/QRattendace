@@ -4,13 +4,12 @@ import './AttendanceScanner.css';
 
 const AttendanceScanner = () => {
   const [employeeId, setEmployeeId] = useState('');
-  const [employeeName, setName] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleScan = async (type) => {
-    if (!employeeId.trim() || !employeeName.trim()) {
-      setMessage('Please enter both Employee ID and Name');
+    if (!employeeId.trim()) {
+      setMessage('Please enter your Employee ID');
       return;
     }
 
@@ -28,8 +27,7 @@ const AttendanceScanner = () => {
 
       const response = await axios.post('/api/attendance/scan', {
         qrData,
-        employeeId: employeeId.trim(),
-        employeeName: employeeName.trim()
+        employeeId: employeeId.trim()
       });
 
       setMessage(`${response.data.message} at ${new Date().toLocaleTimeString()}`);
@@ -37,7 +35,6 @@ const AttendanceScanner = () => {
       // Clear form after successful scan
       if (response.data.message.includes('successful')) {
         setEmployeeId('');
-        setName('');
       }
     } catch (error) {
       setMessage(error.response?.data?.error || 'An error occurred');
@@ -59,17 +56,6 @@ const AttendanceScanner = () => {
             value={employeeId}
             onChange={(e) => setEmployeeId(e.target.value)}
             placeholder="Enter your employee ID"
-            disabled={isLoading}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Full Name:</label>
-          <input
-            type="text"
-            value={employeeName}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter your full name"
             disabled={isLoading}
           />
         </div>
