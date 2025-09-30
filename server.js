@@ -63,56 +63,111 @@ if (isProduction && DATABASE_URL) {
 }
 
 // Initialize database tables
-db.serialize(() => {
-  // Employees table
-  db.run(`CREATE TABLE IF NOT EXISTS employees (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    employee_id TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL,
-    email TEXT,
-    phone TEXT,
-    position TEXT,
-    department TEXT,
-    working_hours TEXT DEFAULT '9:00-17:00',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+const initializeDatabase = async () => {
+  try {
+    if (isProduction && DATABASE_URL) {
+      // PostgreSQL table creation
+      await db.run(`CREATE TABLE IF NOT EXISTS employees (
+        id SERIAL PRIMARY KEY,
+        employee_id TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        email TEXT,
+        phone TEXT,
+        position TEXT,
+        department TEXT,
+        working_hours TEXT DEFAULT '9:00-17:00',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
 
-  // QR Codes table
-  db.run(`CREATE TABLE IF NOT EXISTS qr_codes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date TEXT NOT NULL,
-    type TEXT NOT NULL, -- 'checkin' or 'checkout'
-    qr_data TEXT NOT NULL,
-    is_active BOOLEAN DEFAULT 1,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+      await db.run(`CREATE TABLE IF NOT EXISTS qr_codes (
+        id SERIAL PRIMARY KEY,
+        date TEXT NOT NULL,
+        type TEXT NOT NULL,
+        qr_data TEXT NOT NULL,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
 
-  // Attendance records
-  db.run(`CREATE TABLE IF NOT EXISTS attendance (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    employee_id TEXT NOT NULL,
-    date TEXT NOT NULL,
-    checkin_time DATETIME,
-    checkout_time DATETIME,
-    checkin_qr_id INTEGER,
-    checkout_qr_id INTEGER,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (checkin_qr_id) REFERENCES qr_codes (id),
-    FOREIGN KEY (checkout_qr_id) REFERENCES qr_codes (id)
-  )`);
+      await db.run(`CREATE TABLE IF NOT EXISTS attendance (
+        id SERIAL PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        checkin_time TIMESTAMP,
+        checkout_time TIMESTAMP,
+        checkin_qr_id INTEGER,
+        checkout_qr_id INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (checkin_qr_id) REFERENCES qr_codes (id),
+        FOREIGN KEY (checkout_qr_id) REFERENCES qr_codes (id)
+      )`);
 
-  // Admin users
-  db.run(`CREATE TABLE IF NOT EXISTS admin_users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+      await db.run(`CREATE TABLE IF NOT EXISTS admin_users (
+        id SERIAL PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`);
 
-  // Insert default admin user
-  const hashedPassword = bcrypt.hashSync('admin123', 10);
-  db.run(`INSERT OR IGNORE INTO admin_users (username, password) VALUES ('admin', ?)`, [hashedPassword]);
-});
+      // Insert default admin user
+      const hashedPassword = bcrypt.hashSync('admin123', 10);
+      await db.run(`INSERT INTO admin_users (username, password) VALUES ($1, $2) ON CONFLICT (username) DO NOTHING`, ['admin', hashedPassword]);
+      
+      console.log('PostgreSQL tables created successfully');
+    } else {
+      // SQLite table creation (development)
+      db.serialize(() => {
+        db.run(`CREATE TABLE IF NOT EXISTS employees (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          employee_id TEXT UNIQUE NOT NULL,
+          name TEXT NOT NULL,
+          email TEXT,
+          phone TEXT,
+          position TEXT,
+          department TEXT,
+          working_hours TEXT DEFAULT '9:00-17:00',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS qr_codes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          date TEXT NOT NULL,
+          type TEXT NOT NULL,
+          qr_data TEXT NOT NULL,
+          is_active BOOLEAN DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS attendance (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          employee_id TEXT NOT NULL,
+          date TEXT NOT NULL,
+          checkin_time DATETIME,
+          checkout_time DATETIME,
+          checkin_qr_id INTEGER,
+          checkout_qr_id INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (checkin_qr_id) REFERENCES qr_codes (id),
+          FOREIGN KEY (checkout_qr_id) REFERENCES qr_codes (id)
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS admin_users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT UNIQUE NOT NULL,
+          password TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        const hashedPassword = bcrypt.hashSync('admin123', 10);
+        db.run(`INSERT OR IGNORE INTO admin_users (username, password) VALUES ('admin', ?)`, [hashedPassword]);
+      });
+    }
+  } catch (error) {
+    console.error('Database initialization error:', error);
+  }
+};
+
+// Initialize database on startup
+initializeDatabase();
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
