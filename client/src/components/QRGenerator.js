@@ -51,17 +51,19 @@ const QRGenerator = () => {
                 <div className="qr-code-card">
                   <h4>Check-In QR Code</h4>
                   <div className="qr-image">
-                    <img src={qrCodes.checkin.qr} alt="Check-in QR Code" />
+                    <img src={qrCodes.checkin.simpleQR} alt="Check-in QR Code" />
                   </div>
                   <p>Scan this QR code to check in</p>
+                  <p className="url-info">URL: {qrCodes.url}</p>
                 </div>
 
                 <div className="qr-code-card">
                   <h4>Check-Out QR Code</h4>
                   <div className="qr-image">
-                    <img src={qrCodes.checkout.qr} alt="Check-out QR Code" />
+                    <img src={qrCodes.checkout.simpleQR} alt="Check-out QR Code" />
                   </div>
                   <p>Scan this QR code to check out</p>
+                  <p className="url-info">URL: {qrCodes.url}</p>
                 </div>
               </div>
 

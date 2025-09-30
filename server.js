@@ -156,22 +156,25 @@ app.post('/api/admin/login', (req, res) => {
 // Generate QR codes for today
 app.post('/api/admin/generate-qr', authenticateToken, async (req, res) => {
   const today = moment().format('YYYY-MM-DD');
+  const baseUrl = process.env.RAILWAY_URL || 'https://web-production-d9315.up.railway.app';
   
   try {
-    // Generate check-in QR
+    // Generate check-in QR with Railway URL
     const checkinData = JSON.stringify({
       type: 'checkin',
       date: today,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      url: baseUrl
     });
     
     const checkinQR = await QRCode.toDataURL(checkinData);
     
-    // Generate check-out QR
+    // Generate check-out QR with Railway URL
     const checkoutData = JSON.stringify({
       type: 'checkout',
       date: today,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      url: baseUrl
     });
     
     const checkoutQR = await QRCode.toDataURL(checkoutData);
@@ -189,11 +192,16 @@ app.post('/api/admin/generate-qr', authenticateToken, async (req, res) => {
             
             const checkoutId = this.lastID;
             
-            res.json({
-              checkin: { id: checkinId, qr: checkinQR, data: checkinData },
-              checkout: { id: checkoutId, qr: checkoutQR, data: checkoutData },
-              date: today
-            });
+    // Also generate simple URL QR codes for direct access
+    const simpleCheckinQR = await QRCode.toDataURL(baseUrl);
+    const simpleCheckoutQR = await QRCode.toDataURL(baseUrl);
+
+    res.json({
+      checkin: { id: checkinId, qr: checkinQR, data: checkinData, simpleQR: simpleCheckinQR },
+      checkout: { id: checkoutId, qr: checkoutQR, data: checkoutData, simpleQR: simpleCheckoutQR },
+      date: today,
+      url: baseUrl
+    });
           });
       });
 
@@ -213,6 +221,17 @@ app.get('/api/qr-codes/:date', (req, res) => {
     
     res.json(rows);
   });
+});
+
+// Generate simple QR code with just the URL
+app.get('/api/simple-qr', async (req, res) => {
+  try {
+    const baseUrl = process.env.RAILWAY_URL || 'https://web-production-d9315.up.railway.app';
+    const qrCode = await QRCode.toDataURL(baseUrl);
+    res.json({ qr: qrCode, url: baseUrl });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate QR code' });
+  }
 });
 
 // Process QR scan (check-in/check-out)
