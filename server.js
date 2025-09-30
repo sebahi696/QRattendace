@@ -114,7 +114,7 @@ db.serialize(() => {
 });
 
 // JWT Secret
-const JWT_SECRET = 'your-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
